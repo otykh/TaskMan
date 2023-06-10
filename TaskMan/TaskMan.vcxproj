@@ -129,6 +129,9 @@
   <ItemGroup>
     <ClCompile Include="TaskMan.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="task_man.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
