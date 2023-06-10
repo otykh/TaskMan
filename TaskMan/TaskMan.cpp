@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <vector>
 #include <string>
+#include <Windows.h>
 
 #include "task_man.h"
 
@@ -16,9 +17,16 @@
 // @TODO add date/time of task deadline
 // https://www.rapidtables.com/code/text/ascii-table.html?viewsel=on
 
+TaskMan taskman;
+
+BOOL WINAPI on_exit_handler(DWORD dwCtrlType)
+{
+    taskman.close();
+    return true;
+}
 int main()
 {
-    TaskMan taskman;
+    SetConsoleCtrlHandler(on_exit_handler, true);
 
     int setup_output = taskman.setup();
     if (setup_output != 0)

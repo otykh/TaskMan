@@ -6,21 +6,29 @@
 class TaskMan
 {
 private:
+    bool arrow_wait;
     bool inspecting;
     bool editing;
     bool making_new;
     int selected_task_index;
     std::vector<Task> task_arr;
     std::ofstream save_file;
-
+   
 public:
+    void close()
+    {
+        if (save_file.is_open())
+        {
+            save_file << "It worked!" << std::endl;
+
+            save_file.close();
+        }
+    }
     int setup()
     {
         save_file.open("tmsavefile.txt");
         if (!save_file) { return -1; }
         save_file << "Writing text" << std::endl;
-
-        save_file.close();
 
         return 0;
     }
@@ -76,6 +84,79 @@ public:
             }
         }
     }
+    void edit_page()
+    {
+        std::string new_name;
+        std::string new_desc;
+
+        Task& task = task_arr[selected_task_index];
+        system("CLS");
+        std::cout << "Edit mode enabled" << std::endl;
+        std::cout << "Previous name of the task: " << task._name << std::endl;
+        std::cout << "New name: ";
+        std::getline(std::cin, new_name);
+        std::cout << std::endl;
+        system("CLS");
+        std::cout << "Previous description: " << std::endl << task._description << std::endl << std::endl;
+        std::cout << "New description" << std::endl;
+        std::getline(std::cin, new_desc);
+
+        if (new_name.empty() == false)
+        {
+            task._name = new_name;
+        }
+        if (new_desc.empty() == false)
+        {
+            task._description = new_desc;
+        }
+
+        editing = false;
+    }
+    void add_new_page()
+    {
+        std::string new_name;
+        std::string new_desc;
+
+        system("CLS");
+        std::cout << "Creating new" << std::endl;
+        std::cout << "New name: ";
+        std::getline(std::cin, new_name);
+        std::cout << std::endl;
+
+        if (new_name.empty()) { making_new = false; }
+        else
+        {
+            system("CLS");
+            std::cout << "New description" << std::endl;
+            std::getline(std::cin, new_desc);
+
+            Task new_task = Task(new_name, false, new_desc);
+
+            task_arr.push_back(new_task);
+
+            making_new = false;
+        }
+    }
+    Key get_key()
+    {
+        int ch = _getwch(); // get character
+
+        // handle arrow input
+        if (ch == 224)
+        {
+            arrow_wait = true;
+            return Key::None;
+        }
+        else if (arrow_wait)
+        {
+            arrow_wait = false;
+            return (Key)(ch * -1);
+        }
+        else
+        {
+            return (Key)ch;
+        }
+    }
     void start()
     {
         inspecting = false;
@@ -87,8 +168,6 @@ public:
 
         draw_console(task_arr);
 
-        Key currentKey = Key::None;
-        bool arrow_wait = false;
         while (1)
         {
             bool should_update = false;
@@ -96,84 +175,22 @@ public:
             if (editing)
             {
                 should_update = true;
-
-                std::string new_name;
-                std::string new_desc;
-
-                Task& task = task_arr[selected_task_index];
-                system("CLS");
-                std::cout << "Edit mode enabled" << std::endl;
-                std::cout << "Previous name of the task: " << task._name << std::endl;
-                std::cout << "New name: ";
-                std::getline(std::cin, new_name);
-                std::cout << std::endl;
-                system("CLS");
-                std::cout << "Previous description: " << std::endl << task._description << std::endl << std::endl;
-                std::cout << "New description" << std::endl;
-                std::getline(std::cin, new_desc);
-
-                if (new_name.empty() == false)
-                {
-                    task._name = new_name;
-                }
-                if (new_desc.empty() == false)
-                {
-                    task._description = new_desc;
-                }
-
-                editing = false;
+                edit_page();
             }
             else if (making_new)
             {
                 should_update = true;
-
-                std::string new_name;
-                std::string new_desc;
-
-                system("CLS");
-                std::cout << "Creating new" << std::endl;
-                std::cout << "New name: ";
-                std::getline(std::cin, new_name);
-                std::cout << std::endl;
-
-                if (new_name.empty()) { making_new = false; }
-                else
-                {
-                    system("CLS");
-                    std::cout << "New description" << std::endl;
-                    std::getline(std::cin, new_desc);
-
-                    Task new_task = Task(new_name, false, new_desc);
-
-                    task_arr.push_back(new_task);
-
-                    making_new = false;
-                }
+                add_new_page();
             }
             else
             {
-                int ch = _getwch(); // get character
-
-                // handle arrow input
-                if (ch == 224)
-                {
-                    arrow_wait = true;
-                    continue;
-                }
-                else if (arrow_wait)
-                {
-                    currentKey = (Key)(ch * -1);
-                    arrow_wait = false;
-                }
-                else
-                {
-                    currentKey = (Key)ch;
-                }
+                Key current_key = get_key();
+                if (current_key == Key::None) { continue; }
 
                 if (!inspecting)
                 {
                     // handle input
-                    switch (currentKey)
+                    switch (current_key)
                     {
                     case Key::ArrowKeyDown:
                         selected_task_index++;
@@ -192,6 +209,7 @@ public:
                         task_arr[selected_task_index]._completed = !task_arr[selected_task_index]._completed;
                         break;
                     case Key::E:
+                        if (task_arr.size() == 0) { break; }
                         should_update = true;
                         inspecting = true;
                         break;
@@ -214,12 +232,12 @@ public:
                 }
                 else if (inspecting)
                 {
-                    if (currentKey == Key::ESC)
+                    if (current_key == Key::ESC)
                     {
                         inspecting = false;
                         should_update = true;
                     }
-                    else if (currentKey == Key::E)
+                    else if (current_key == Key::E)
                     {
                         editing = true;
                     }
