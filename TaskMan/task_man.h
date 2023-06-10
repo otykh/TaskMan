@@ -12,23 +12,71 @@ private:
     bool making_new;
     int selected_task_index;
     std::vector<Task> task_arr;
-    std::ofstream save_file;
+    std::ofstream save_file_input;
    
 public:
     void close()
     {
-        if (save_file.is_open())
+        if (save_file_input.is_open())
         {
-            save_file << "It worked!" << std::endl;
+            for (int i = 0; i < task_arr.size(); i++)
+            {
+                save_file_input << task_arr[i]._name << '|' << (task_arr[i]._completed ? '1' : '0') << '|' << task_arr[i]._description << std::endl;
+            }
+            save_file_input.close();
+        }
+    }
+    void read_tasks_from_file(std::ifstream &file)
+    {
+        std::string line;
+        int field_count = 0;
+        while (std::getline(file, line))
+        {
+            std::string temp_task_name;
+            bool temp_task_is_completed;
+            std::string temp_task_description;
 
-            save_file.close();
+            field_count = 0;
+            std::string accum;
+            for (int i = 0; i < line.size(); i++)
+            {
+                if (line[i] == '|') {
+                    switch (field_count)
+                    {
+                    case 0:
+                        temp_task_name = accum;
+                        break;
+                    case 1:
+                        temp_task_is_completed = accum[0] == '1';
+                        break;
+                    case 2:
+                        temp_task_description = accum;
+                        break;
+                    }
+                    field_count++;
+                    accum.clear();
+                }
+                else
+                {
+                    accum += line[i];
+                }
+            }
+
+            Task new_task(temp_task_name, temp_task_is_completed, temp_task_description);
+            task_arr.push_back(new_task);
         }
     }
     int setup()
     {
-        save_file.open("tmsavefile.txt");
-        if (!save_file) { return -1; }
-        save_file << "Writing text" << std::endl;
+        std::ifstream save_file_output;
+        save_file_output.open("tmsavefile.txt");
+        if (!save_file_output) { return -1; }
+        read_tasks_from_file(save_file_output);
+        
+        save_file_output.close();
+
+        save_file_input.open("tmsavefile.txt");
+        if (!save_file_input) { return -2; }
 
         return 0;
     }
