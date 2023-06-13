@@ -6,13 +6,9 @@
 #include <string>
 #include <Windows.h>
 
+#include "time_conv.h"
 #include "task_man.h"
 
-// @BUG when pressed E on empty task the program freezes
-// @TODO make sub tasks
-// @TODO make auto save
-// @TODO add auto expire task (with three Enter/Submit pressed the task will be removed)
-// @TODO add remove feature
 // @TODO add date/time of task addition
 // @TODO add date/time of task deadline
 // https://www.rapidtables.com/code/text/ascii-table.html?viewsel=on

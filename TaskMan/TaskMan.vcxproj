@@ -133,6 +133,7 @@
     <ClInclude Include="keys.h" />
     <ClInclude Include="task.h" />
     <ClInclude Include="task_man.h" />
+    <ClInclude Include="time_conv.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

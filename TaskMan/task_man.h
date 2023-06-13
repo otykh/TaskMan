@@ -21,7 +21,7 @@ public:
         {
             for (int i = 0; i < task_arr.size(); i++)
             {
-                save_file_input << task_arr[i]._name << '|' << (task_arr[i]._completed ? '1' : '0') << '|' << task_arr[i]._description << std::endl;
+                save_file_input << task_arr[i]._name << '|' << (task_arr[i]._completed ? '1' : '0') << '|' << task_arr[i]._description << '|' << task_arr[i]._expiry_time << '|' << std::endl;
             }
             save_file_input.close();
         }
@@ -33,8 +33,9 @@ public:
         while (std::getline(file, line))
         {
             std::string temp_task_name;
-            bool temp_task_is_completed;
+            bool temp_task_is_completed = false;
             std::string temp_task_description;
+            time_t temp_task_exp_time = -1;
 
             field_count = 0;
             std::string accum;
@@ -52,6 +53,14 @@ public:
                     case 2:
                         temp_task_description = accum;
                         break;
+                    case 3:
+                        if (accum.empty()) { // compatability from previous version @TODO remove for the future versions after migration
+                            temp_task_exp_time = -1;
+                        }
+                        else {
+                            temp_task_exp_time = std::stoll(accum);
+                        }
+                        break;
                     }
                     field_count++;
                     accum.clear();
@@ -62,8 +71,20 @@ public:
                 }
             }
 
-            Task new_task(temp_task_name, temp_task_is_completed, temp_task_description);
+            Task new_task(temp_task_name, temp_task_is_completed, temp_task_description, temp_task_exp_time); // @TODO save/load of the time
             task_arr.push_back(new_task);
+        }
+    }
+    void remove_expired_tasks()
+    {
+        time_t time_now = TimeConverter::GetTimeNow();
+
+        std::vector<Task>::iterator iter;
+        for (iter = task_arr.begin(); iter != task_arr.end(); ) {
+            if (iter->_expiry_time != -1 && time_now > iter->_expiry_time)
+                iter = task_arr.erase(iter);
+            else
+                ++iter;
         }
     }
     int setup()
@@ -72,6 +93,7 @@ public:
         save_file_output.open("tmsavefile.txt");
         if (!save_file_output) { return -1; }
         read_tasks_from_file(save_file_output);
+        remove_expired_tasks();
         
         save_file_output.close();
 
@@ -88,13 +110,8 @@ public:
             else
             {
                 std::cout << arr[selected_task_index]._name << std::endl << std::endl;
-                std::cout << "Completed: ";
-                if (arr[selected_task_index]._completed) {
-                    std::cout << "Yes";
-                }
-                else {
-                    std::cout << "No";
-                }
+                std::cout << "Completed: " << (arr[selected_task_index]._completed ? "Yes" : "No") << std::endl;
+                std::cout << "Expiry: " << TimeConverter::TimeToString(arr[selected_task_index]._expiry_time) << std::endl;
                 std::cout << std::endl;
                 std::cout << arr[selected_task_index]._description << std::endl;
             }
@@ -178,11 +195,27 @@ public:
             std::cout << "New description" << std::endl;
             std::getline(std::cin, new_desc);
 
-            Task new_task = Task(new_name, false, new_desc);
+            system("CLS");
+            std::cout << "Set expiration date" << std::endl;
+            time_t exp_date = ask_user_time();
+
+            Task new_task = Task(new_name, false, new_desc, exp_date);
 
             task_arr.push_back(new_task);
 
             making_new = false;
+        }
+    }
+    void remove_task()
+    {
+        if (task_arr.size() != 0) {
+            std::cout << "Are you sure you want to remove " << task_arr[selected_task_index]._name << " (y/n) ";
+            char ans = std::getchar();
+            if (ans == 'y' || ans == 'Y')
+            {
+                task_arr.erase(task_arr.begin() + selected_task_index);
+                selected_task_index = task_arr.size() - 1;
+            }
         }
     }
     Key get_key()
@@ -265,16 +298,8 @@ public:
                         making_new = true;
                         break;
                     case Key::BCS:
-                        if (task_arr.size() != 0) {
-                            std::cout << "Are you sure you want to remove " << task_arr[selected_task_index]._name << " (y/n) ";
-                            char ans = std::getchar();
-                            if (ans == 'y' || ans == 'Y')
-                            {
-                                task_arr.erase(task_arr.begin() + selected_task_index);
-                                selected_task_index = task_arr.size() - 1;
-                                should_update = true;
-                            }
-                        }
+                        should_update = true;
+                        remove_task();
                         break;
                     }
                 }
@@ -298,5 +323,51 @@ public:
                 draw_console(task_arr);
             }
         };
+    }
+    time_t ask_user_time()
+    {
+        std::string temp;
+        time_t time_now;
+
+        int day = 0;
+        int month = 0;
+        int year = 0;
+
+        std::cout << "D: ";
+        std::cin >> temp;
+
+        char first = temp.at(0);
+
+        std::cout << (first != '+');
+        if ((first < '0' || first > '9') && first != '-' && first != '+') // fail save, check if the character that, the user input is not +, -, or something else to skip the date selection stage
+        {
+            return -1;
+        }
+
+        day = std::stoi(temp);
+        if (temp.at(0) == '+' || temp.at(0) == '-')
+        {
+            day += TimeConverter::GetDayI();
+        }
+
+        system("CLS");
+        std::cout << "D: " << day << "/";
+        std::cin >> temp;
+        month = std::stoi(temp);
+        if (temp.at(0) == '+' || temp.at(0) == '-')
+        {
+            month += TimeConverter::GetMonthI();
+        }
+
+        system("CLS");
+        std::cout << "D: " << day << "/" << month << "/";
+        std::cin >> temp;
+        year = std::stoi(temp);
+        if (temp.at(0) == '+' || temp.at(0) == '-')
+        {
+            year += TimeConverter::GetYearI();
+        }
+
+        return TimeConverter::RawToTime(day, month, year);
     }
 };

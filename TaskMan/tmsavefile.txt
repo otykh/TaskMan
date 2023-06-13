@@ -1,5 +1,2 @@
-some task name|0|
-some completed task|1|
-some|0|
-brotherhood of MAN|1|
-test new task!|0|
+something|0|somethign else|1686819608|
+tomorrow|0|tom|1686733216|
