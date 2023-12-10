@@ -18,6 +18,9 @@
     <ClCompile Include="TaskMan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="task_man.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="task_man.h">
@@ -30,6 +33,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="time_conv.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="task_man_eror_codes.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
